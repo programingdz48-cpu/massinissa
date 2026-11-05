@@ -1,0 +1,3 @@
+[build]
+  # The site is plain static files at the repository root, so publish from there.
+  publish = "."
