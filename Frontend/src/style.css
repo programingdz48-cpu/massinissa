@@ -727,6 +727,14 @@ main { flex: 1; }
   background: rgba(255,255,255,0.1);
   box-shadow: 0 0 0 3px rgba(232, 93, 42, 0.2);
 }
+input[type="file"].admin-file-input {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.7);
+  margin-top: 0.4rem;
+}
 .admin-btn-primary {
   width: 100%;
   padding: 0.9rem;
@@ -880,11 +888,13 @@ main { flex: 1; }
 .admin-card {
   background: rgba(26,26,46,0.85);
   border: 1px solid rgba(232,93,42,0.25);
-  border-radius: 16px;
-  padding: 2.2rem;
+  border-radius: 1rem;
+  padding: 2rem;
   margin-bottom: 2.5rem;
   width: 100%;
+  max-width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 .admin-card-title {
   font-family: var(--font-display);
@@ -899,8 +909,40 @@ main { flex: 1; }
 }
 .admin-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.admin-form-group {
+  margin-bottom: 1rem;
+  min-width: 0; /* يمنع خروج الـ input عن حدود الـ Grid نهائياً */
+  width: 100%;
+  box-sizing: border-box;
+}
+.admin-form-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.admin-input {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all var(--transition-base);
+  box-sizing: border-box;
+  display: block;
 }
 
 /* Color Picker Container */

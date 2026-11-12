@@ -391,8 +391,8 @@ export const Dashboard = () => {
                     <input
                       type="file"
                       accept="image/*"
+                      className="admin-file-input"
                       onChange={handleImageFile}
-                      style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}
                     />
                   </div>
                 </div>
