@@ -137,3 +137,4 @@ export const initialMenuItems = [
     image: "/Assets/Pictures/Tacos/Poulet.jpg",
   },
 ];
+

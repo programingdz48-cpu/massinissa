@@ -1,8 +1,10 @@
 import React from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import { useMenu } from '../context/MenuContext';
 
 export const MenuItemCard = ({ item }) => {
-  const { lang, t } = useLanguage();
+  const { lang } = useLanguage();
+  const { categories } = useMenu();
 
   // الحصول على الاسم المناسب للغة
   const name =
@@ -16,17 +18,16 @@ export const MenuItemCard = ({ item }) => {
     lang === 'fr' ? (item.descFr || item.descEn) :
     item.descEn;
 
-  const category = (item.category || 'dish').toLowerCase();
-  const badgeClass =
-    category === 'burger' ? 'menu-item__badge--burger' :
-    category === 'sandwich' ? 'menu-item__badge--sandwich' :
-    category === 'tacos' ? 'menu-item__badge--tacos' : '';
+  // البحث عن الفئة المطابقة لاستخراج اللون والاسم
+  const matchedCategory = categories.find(
+    (c) => c.id.toLowerCase() === item.category?.toLowerCase()
+  );
 
-  const badgeText =
-    category === 'burger' ? t('badge.burger') :
-    category === 'sandwich' ? t('badge.sandwich') :
-    category === 'tacos' ? t('badge.tacos') :
-    t('badge.dish');
+  const categoryName = matchedCategory
+    ? (lang === 'ar' ? matchedCategory.nameAr : lang === 'fr' ? matchedCategory.nameFr : matchedCategory.nameEn)
+    : item.category;
+
+  const categoryColor = matchedCategory?.color || '#E85D2A';
 
   return (
     <article className="menu-item">
@@ -37,18 +38,26 @@ export const MenuItemCard = ({ item }) => {
           className="menu-item__img"
           loading="lazy"
           onError={(e) => {
-            // صورة احتياطية إذا كان الرابط غير صالح
             e.target.src = '/Assets/Pictures/Burger/Burger.jpg';
           }}
         />
-        <span className={`menu-item__badge ${badgeClass}`}>{badgeText}</span>
+        <span
+          className="menu-item__badge"
+          style={{
+            backgroundColor: categoryColor,
+            color: '#fff',
+            boxShadow: `0 2px 10px ${categoryColor}66`,
+          }}
+        >
+          {categoryName}
+        </span>
       </div>
       <div className="menu-item__body">
         <h3 className="menu-item__name">{name}</h3>
         <p className="menu-item__desc">{desc}</p>
         <div className="menu-item__footer">
-          <span className="menu-item__price">
-            {item.price} <small>DA</small>
+          <span className="menu-item__price" style={{ color: categoryColor }}>
+            {item.price} <small style={{ color: `${categoryColor}bb` }}>DA</small>
           </span>
         </div>
       </div>

@@ -93,3 +93,4 @@ export const translations = {
     'footer.rights'  : '© 2026 ماسينيسا — بيتزا ومطعم. جميع الحقوق محفوظة.',
   }
 };
+
