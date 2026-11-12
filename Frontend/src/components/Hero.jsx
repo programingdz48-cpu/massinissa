@@ -20,9 +20,9 @@ export const Hero = () => {
         <div className="hero__cup-wrap" aria-hidden="true">
           <div className="hero__glow"></div>
           <img
-            src="/Assets/Pictures/Burger/Burger.jpg"
-            alt="Massinissa signature burger"
-            className="hero__cup-img"
+            src="/Assets/Pictures/massinissa logo/massinissa Logo.jpg"
+            alt="Massinissa Official Logo"
+            className="hero__cup-img hero__logo-hero"
             draggable="false"
           />
         </div>
@@ -30,4 +30,3 @@ export const Hero = () => {
     </main>
   );
 };
-
