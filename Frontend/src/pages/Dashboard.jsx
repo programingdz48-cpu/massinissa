@@ -161,7 +161,18 @@ export const Dashboard = () => {
     <div className="dashboard-wrapper">
       {/* Navbar Dashboard */}
       <header className="dashboard-navbar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+          <img
+            src="/Assets/Pictures/massinissa logo/massinissa Logo.jpg"
+            alt="Massinissa Logo"
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '1.5px solid #E85D2A',
+            }}
+          />
           <span style={{ fontFamily: 'Playfair Display SC', fontSize: '1.25rem', color: '#fff', letterSpacing: '0.1em' }}>
             MASSI<span style={{ color: '#E85D2A' }}>NISSA</span> <small style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', fontFamily: 'sans-serif' }}>| لوحة الإدارة</small>
           </span>

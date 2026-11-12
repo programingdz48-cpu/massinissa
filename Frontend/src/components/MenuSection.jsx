@@ -96,17 +96,16 @@ export const MenuSection = () => {
         return (
           <div key={cat.id} style={{ marginBottom: '3rem' }}>
             <div className="menu-category-header" style={{ borderBottomColor: `${cat.color}44` }}>
-              <div
-                className="menu-category-icon"
-                style={{
-                  backgroundColor: `${cat.color}22`,
-                  borderColor: `${cat.color}66`,
-                  color: cat.color,
-                }}
-              >
-                <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>✦</span>
-              </div>
-              <h3 className="menu-category-title" style={{ color: '#fff' }}>
+              <h3 className="menu-category-title" style={{ color: '#fff', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '6px',
+                    height: '24px',
+                    borderRadius: '4px',
+                    backgroundColor: cat.color,
+                  }}
+                />
                 {catName}
               </h3>
             </div>
@@ -123,10 +122,16 @@ export const MenuSection = () => {
       {uncategorizedItems.length > 0 && (
         <div style={{ marginBottom: '3rem' }}>
           <div className="menu-category-header">
-            <div className="menu-category-icon">
-              <span style={{ fontSize: '1.2rem' }}>🍽️</span>
-            </div>
-            <h3 className="menu-category-title">
+            <h3 className="menu-category-title" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '6px',
+                  height: '24px',
+                  borderRadius: '4px',
+                  backgroundColor: 'var(--color-accent)',
+                }}
+              />
               {lang === 'ar' ? 'أطباق أخرى' : lang === 'fr' ? 'Autres Plats' : 'Other Dishes'}
             </h3>
           </div>

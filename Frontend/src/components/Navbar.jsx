@@ -9,17 +9,14 @@ export const Navbar = () => {
 
   return (
     <header className="navbar" role="banner">
-      <div className="navbar__logo">
-        <svg className="navbar__logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <circle cx="20" cy="20" r="18" stroke="#E85D2A" stroke-width="1.5"/>
-          <path d="M14 28 C14 28 14 18 20 12 C26 18 26 28 26 28Z" fill="#E85D2A" opacity="0.3"/>
-          <path d="M14 28 C14 28 14 18 20 12 C26 18 26 28 26 28Z" stroke="#E85D2A" stroke-width="1.5" fill="none"/>
-          <line x1="20" y1="12" x2="20" y2="8" stroke="#E85D2A" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M17 16 Q13 14 12 10" stroke="#E85D2A" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-          <path d="M23 16 Q27 14 28 10" stroke="#E85D2A" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        </svg>
+      <Link to="/" className="navbar__logo" style={{ textDecoration: 'none' }}>
+        <img
+          src="/Assets/Pictures/massinissa logo/massinissa Logo.jpg"
+          alt="Massinissa Logo"
+          className="navbar__logo-img"
+        />
         <span className="navbar__logo-text">MASSI<span>NISSA</span></span>
-      </div>
+      </Link>
 
       <nav className="navbar__nav" aria-label="Main navigation">
         <a href="#hero" className="navbar__link navbar__link--active">{t('nav.home')}</a>
@@ -56,4 +53,3 @@ export const Navbar = () => {
     </header>
   );
 };
-

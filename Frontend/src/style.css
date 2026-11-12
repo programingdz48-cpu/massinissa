@@ -74,9 +74,21 @@ button { cursor: pointer; border: none; background: none; font-family: inherit; 
 .navbar__logo {
   display: flex;
   align-items: center;
-  gap: .6rem;
+  gap: .8rem;
   flex-shrink: 0;
   color: var(--color-white);
+}
+.navbar__logo-img {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--color-accent);
+  box-shadow: 0 0 12px rgba(232, 93, 42, 0.35);
+  transition: transform var(--transition-base);
+}
+.navbar__logo:hover .navbar__logo-img {
+  transform: scale(1.06);
 }
 .navbar__logo-icon { width: 36px; height: 36px; }
 .navbar__logo-text {
