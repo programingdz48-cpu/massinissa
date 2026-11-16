@@ -1,102 +1,272 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../supabaseClient';
 import { initialMenuItems } from '../data/initialMenu';
 import { initialCategories } from '../data/initialCategories';
 
 const MenuContext = createContext();
 
 export const MenuProvider = ({ children }) => {
-  // إدارة الأصناف
-  const [menuItems, setMenuItems] = useState(() => {
+  const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // دالة جلب البيانات من Supabase
+  const fetchData = async () => {
     try {
-      const saved = localStorage.getItem('massinissa_menu_items');
-      if (saved) {
-        return JSON.parse(saved);
+      setLoading(true);
+
+      // 1. جلب الفئات
+      const { data: catsData, error: catsError } = await supabase
+        .from('categories')
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (catsError) {
+        console.error('Error fetching categories:', catsError);
       }
-    } catch (e) {
-      console.error('Error loading menu from localStorage', e);
-    }
-    return initialMenuItems;
-  });
 
-  // إدارة التصنيفات
-  const [categories, setCategories] = useState(() => {
-    try {
-      const savedCats = localStorage.getItem('massinissa_categories');
-      if (savedCats) {
-        return JSON.parse(savedCats);
+      // إذا كانت الفئات فارغة، نقوم بتهيئة الفئات الافتراضية في Supabase
+      let currentCats = catsData;
+      if (!catsData || catsData.length === 0) {
+        const rowsToInsert = initialCategories.map((c) => ({
+          id: c.id,
+          name_ar: c.nameAr,
+          name_fr: c.nameFr,
+          name_en: c.nameEn,
+          color: c.color,
+        }));
+        await supabase.from('categories').upsert(rowsToInsert);
+        currentCats = rowsToInsert;
       }
-    } catch (e) {
-      console.error('Error loading categories from localStorage', e);
-    }
-    return initialCategories;
-  });
 
-  // حفظ الأصناف
-  useEffect(() => {
-    try {
-      localStorage.setItem('massinissa_menu_items', JSON.stringify(menuItems));
-    } catch (e) {
-      console.error('Error saving menu to localStorage', e);
-    }
-  }, [menuItems]);
+      const formattedCategories = (currentCats || []).map((c) => ({
+        id: c.id,
+        nameAr: c.name_ar,
+        nameFr: c.name_fr,
+        nameEn: c.name_en,
+        color: c.color,
+      }));
+      setCategories(formattedCategories);
 
-  // حفظ التصنيفات
-  useEffect(() => {
-    try {
-      localStorage.setItem('massinissa_categories', JSON.stringify(categories));
-    } catch (e) {
-      console.error('Error saving categories to localStorage', e);
-    }
-  }, [categories]);
+      // 2. جلب الأطباق
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('menu_items')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  // دوال الأصناف
-  const addItem = (item) => {
-    const newItem = {
-      ...item,
-      id: item.id || `item-${Date.now()}`,
-      price: Number(item.price) || 0,
-    };
-    setMenuItems((prev) => [newItem, ...prev]);
+      if (itemsError) {
+        console.error('Error fetching menu items:', itemsError);
+      }
+
+      // إذا كانت الأطباق فارغة، نقوم بإدخال الأطباق الأولية في Supabase
+      let currentItems = itemsData;
+      if (!itemsData || itemsData.length === 0) {
+        const itemsToInsert = initialMenuItems.map((item) => ({
+          id: item.id,
+          category: item.category,
+          name_ar: item.nameAr,
+          name_fr: item.nameFr,
+          name_en: item.nameEn,
+          desc_ar: item.descAr,
+          desc_fr: item.descFr,
+          desc_en: item.descEn,
+          price: item.price,
+          image: item.image,
+        }));
+        await supabase.from('menu_items').upsert(itemsToInsert);
+        currentItems = itemsToInsert;
+      }
+
+      const formattedItems = (currentItems || []).map((item) => ({
+        id: item.id,
+        category: item.category,
+        nameAr: item.name_ar,
+        nameFr: item.name_fr,
+        nameEn: item.name_en,
+        descAr: item.desc_ar,
+        descFr: item.desc_fr,
+        descEn: item.desc_en,
+        price: Number(item.price),
+        image: item.image,
+      }));
+      setMenuItems(formattedItems);
+    } catch (err) {
+      console.error('Database connection error:', err);
+      // في حالة وجود خطأ نستخدم البيانات الأولية كخطة احتياطية
+      setCategories(initialCategories);
+      setMenuItems(initialMenuItems);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateItem = (id, updatedFields) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // دالة رفع الصور إلى Supabase Storage Bucket
+  const uploadImage = async (file) => {
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('menu-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (error) {
+        console.error('Storage upload error:', error);
+        throw error;
+      }
+
+      // الحصول على الرابط العام المباشر للصورة
+      const { data: publicUrlData } = supabase.storage
+        .from('menu-images')
+        .getPublicUrl(filePath);
+
+      return publicUrlData.publicUrl;
+    } catch (err) {
+      console.error('Failed to upload image:', err);
+      throw err;
+    }
+  };
+
+  // دوال إدارة الأطباق
+  const addItem = async (item) => {
+    const itemId = item.id || `item-${Date.now()}`;
+    const row = {
+      id: itemId,
+      category: item.category,
+      name_ar: item.nameAr,
+      name_fr: item.nameFr,
+      name_en: item.nameEn,
+      desc_ar: item.descAr,
+      desc_fr: item.descFr,
+      desc_en: item.descEn,
+      price: Number(item.price) || 0,
+      image: item.image,
+    };
+
+    // تحديث الحالة المحلية فوراً لتجربة سريعة
+    const newItem = {
+      id: itemId,
+      category: item.category,
+      nameAr: item.nameAr,
+      nameFr: item.nameFr,
+      nameEn: item.nameEn,
+      descAr: item.descAr,
+      descFr: item.descFr,
+      descEn: item.descEn,
+      price: Number(item.price) || 0,
+      image: item.image,
+    };
+    setMenuItems((prev) => [newItem, ...prev]);
+
+    // الإدخال في Supabase
+    const { error } = await supabase.from('menu_items').insert([row]);
+    if (error) {
+      console.error('Error inserting item in Supabase:', error);
+      fetchData(); // إعادة المزامنة في حال وجود خطأ
+    }
+  };
+
+  const updateItem = async (id, updatedFields) => {
     setMenuItems((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, ...updatedFields, price: Number(updatedFields.price ?? item.price) } : item
       )
     );
+
+    const updatePayload = {};
+    if (updatedFields.price !== undefined) updatePayload.price = Number(updatedFields.price);
+    if (updatedFields.nameAr !== undefined) updatePayload.name_ar = updatedFields.nameAr;
+    if (updatedFields.nameFr !== undefined) updatePayload.name_fr = updatedFields.nameFr;
+    if (updatedFields.nameEn !== undefined) updatePayload.name_en = updatedFields.nameEn;
+    if (updatedFields.category !== undefined) updatePayload.category = updatedFields.category;
+    if (updatedFields.image !== undefined) updatePayload.image = updatedFields.image;
+
+    const { error } = await supabase.from('menu_items').update(updatePayload).eq('id', id);
+    if (error) {
+      console.error('Error updating item in Supabase:', error);
+    }
   };
 
-  const deleteItem = (id) => {
+  const deleteItem = async (id) => {
     setMenuItems((prev) => prev.filter((item) => item.id !== id));
+    const { error } = await supabase.from('menu_items').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting item from Supabase:', error);
+    }
   };
 
-  // دوال الفئات
-  const addCategory = (newCat) => {
+  // دوال إدارة الفئات
+  const addCategory = async (newCat) => {
     const catId = newCat.id ? newCat.id.toLowerCase().trim().replace(/\s+/g, '-') : `cat-${Date.now()}`;
-    const formattedCat = {
-      ...newCat,
+    const row = {
       id: catId,
+      name_ar: newCat.nameAr,
+      name_fr: newCat.nameFr,
+      name_en: newCat.nameEn,
       color: newCat.color || '#E85D2A',
     };
-    setCategories((prev) => [...prev, formattedCat]);
+
+    setCategories((prev) => [
+      ...prev,
+      {
+        id: catId,
+        nameAr: newCat.nameAr,
+        nameFr: newCat.nameFr,
+        nameEn: newCat.nameEn,
+        color: newCat.color || '#E85D2A',
+      },
+    ]);
+
+    const { error } = await supabase.from('categories').insert([row]);
+    if (error) {
+      console.error('Error inserting category in Supabase:', error);
+    }
   };
 
-  const updateCategory = (id, updatedFields) => {
+  const updateCategory = async (id, updatedFields) => {
     setCategories((prev) =>
       prev.map((cat) => (cat.id === id ? { ...cat, ...updatedFields } : cat))
     );
+
+    const payload = {};
+    if (updatedFields.nameAr !== undefined) payload.name_ar = updatedFields.nameAr;
+    if (updatedFields.nameFr !== undefined) payload.name_fr = updatedFields.nameFr;
+    if (updatedFields.nameEn !== undefined) payload.name_en = updatedFields.nameEn;
+    if (updatedFields.color !== undefined) payload.color = updatedFields.color;
+
+    const { error } = await supabase.from('categories').update(payload).eq('id', id);
+    if (error) {
+      console.error('Error updating category in Supabase:', error);
+    }
   };
 
-  const deleteCategory = (id) => {
+  const deleteCategory = async (id) => {
     setCategories((prev) => prev.filter((cat) => cat.id !== id));
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting category from Supabase:', error);
+    }
   };
 
-  const resetToDefault = () => {
-    setMenuItems(initialMenuItems);
-    setCategories(initialCategories);
-    localStorage.removeItem('massinissa_menu_items');
-    localStorage.removeItem('massinissa_categories');
+  const resetToDefault = async () => {
+    setLoading(true);
+    try {
+      await supabase.from('menu_items').delete().neq('id', '___non_existent___');
+      await supabase.from('categories').delete().neq('id', '___non_existent___');
+      await fetchData();
+    } catch (e) {
+      console.error('Reset error:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -111,6 +281,8 @@ export const MenuProvider = ({ children }) => {
         updateCategory,
         deleteCategory,
         resetToDefault,
+        uploadImage,
+        loading,
       }}
     >
       {children}

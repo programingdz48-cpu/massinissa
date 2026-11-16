@@ -26,6 +26,8 @@ export const Dashboard = () => {
     updateCategory,
     deleteCategory,
     resetToDefault,
+    uploadImage,
+    loading,
   } = useMenu();
 
   const navigate = useNavigate();
@@ -44,7 +46,8 @@ export const Dashboard = () => {
     image: '/Assets/Pictures/Burger/Burger.jpg',
   });
 
-  // نموذج إضافة تصنيف جديد
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   const [categoryForm, setCategoryForm] = useState({
     id: '',
     nameAr: '',
@@ -68,14 +71,21 @@ export const Dashboard = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageFile = (e) => {
+  const handleImageFile = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
+      try {
+        setUploadingImage(true);
+        const publicUrl = await uploadImage(file);
+        setUploadedImageUrl(publicUrl);
+        setFormData((prev) => ({ ...prev, image: publicUrl }));
+        setSuccessMsg('تم رفع الصورة بنجاح إلى الخادم السحابي!');
+        setTimeout(() => setSuccessMsg(''), 4000);
+      } catch (err) {
+        alert('حدث خطأ أثناء رفع الصورة: ' + (err.message || err));
+      } finally {
+        setUploadingImage(false);
+      }
     }
   };
 
@@ -368,7 +378,7 @@ export const Dashboard = () => {
                   </div>
 
                   <div className="admin-form-group">
-                    <label>الصورة (اختر أو ارفع من جهازك)</label>
+                    <label>الصورة (اختر صورة جاهزة أو ارفع صورة جديدة)</label>
                     <select
                       name="image"
                       className="admin-input"
@@ -376,6 +386,9 @@ export const Dashboard = () => {
                       onChange={handleFormChange}
                       style={{ background: '#1A1A2E', marginBottom: '0.5rem' }}
                     >
+                      {uploadedImageUrl && (
+                        <option value={uploadedImageUrl}>⭐ الصورة المرفوعة حديثاً</option>
+                      )}
                       <option value="/Assets/Pictures/Burger/Burger.jpg">برغر كاملة (Burger Complete)</option>
                       <option value="/Assets/Pictures/Burger/Burger_Chicken.jpg">برغر دجاج (Chicken)</option>
                       <option value="/Assets/Pictures/Burger/Burger_viande_Hache.jpg">برغر لحم (Beef)</option>
@@ -388,12 +401,34 @@ export const Dashboard = () => {
                       <option value="/Assets/Pictures/Tacos/Mix.jpg">تاكوس ميكس</option>
                       <option value="/Assets/Pictures/Tacos/Poulet.jpg">تاكوس دجاج</option>
                     </select>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="admin-file-input"
-                      onChange={handleImageFile}
-                    />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="admin-file-input"
+                        onChange={handleImageFile}
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage && (
+                        <span style={{ fontSize: '0.8rem', color: '#E85D2A', fontWeight: 'bold' }}>
+                          جاري الرفع... ⏳
+                        </span>
+                      )}
+                    </div>
+
+                    {formData.image && (
+                      <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <img
+                          src={formData.image}
+                          alt="Preview"
+                          style={{ width: '48px', height: '48px', borderRadius: '6px', objectFit: 'cover' }}
+                        />
+                        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)' }}>
+                          معاينة الصورة المختارة
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
