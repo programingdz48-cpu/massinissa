@@ -104,17 +104,65 @@ export const MenuProvider = ({ children }) => {
     fetchData();
   }, []);
 
-  // دالة رفع الصور إلى Supabase Storage Bucket
+  // دالة تصغير وضغط الصورة قبل الرفع
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const maxWidth = 800; // أقصى عرض مناسب جداً لسرعة الموقع وجودة العرض
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // تحويل وضغط الصورة بصيغة WebP الحديثة والخفيفة جداً بجودة 80%
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                resolve(file); // احتياطاً إذا لم يدعم المتصفح
+              }
+            },
+            'image/webp',
+            0.8
+          );
+        };
+        img.onerror = (err) => reject(err);
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
+  // دالة رفع الصور إلى Supabase Storage Bucket بعد الضغط التلقائي
   const uploadImage = async (file) => {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      // 1. ضغط الصورة وتصغير حجمها
+      const compressedBlob = await compressImage(file);
+
+      // 2. تجهيز اسم فريد بصيغة .webp
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.webp`;
       const filePath = `uploads/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from('menu-images')
-        .upload(filePath, file, {
-          cacheControl: '3600',
+        .upload(filePath, compressedBlob, {
+          contentType: 'image/webp',
+          cacheControl: '31536000', // تخزين مؤقت لسنة كاملة لسرعة البرق
           upsert: false,
         });
 
@@ -123,7 +171,7 @@ export const MenuProvider = ({ children }) => {
         throw error;
       }
 
-      // الحصول على الرابط العام المباشر للصورة
+      // 3. الحصول على الرابط العام المباشر للصورة
       const { data: publicUrlData } = supabase.storage
         .from('menu-images')
         .getPublicUrl(filePath);
